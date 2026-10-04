@@ -1,181 +1,120 @@
-# Matchmaking Backend
+# UNIO — Plataforma de Matchmaking para Startups e Investidores Anjo
 
 <p align="center">
+  <img src="https://img.shields.io/badge/React-TypeScript-61DAFB" alt="React + TypeScript" />
   <img src="https://img.shields.io/badge/Java-21-orange" alt="Java 21" />
   <img src="https://img.shields.io/badge/Spring%20Boot-4.1.1-brightgreen" alt="Spring Boot 4.1.1" />
   <img src="https://img.shields.io/badge/PostgreSQL-Database-316192" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/JWT-Enabled-000000" alt="JWT" />
 </p>
 
-Backend de uma plataforma de matchmaking entre startups e investidores anjo, desenvolvida como projeto acadêmico no Recife / Porto Digital.
+Projeto Integrador do 5º período de Análise e Desenvolvimento de Sistemas (SENAC Recife), no contexto de **Startups e Economia Criativa**. A plataforma conecta **startups nascentes do Porto Digital** (Bairro do Recife) a **investidores anjo e mentores**, por meio de matchmaking por afinidade, comunicação dentro da plataforma e acompanhamento de métricas do ecossistema.
 
-## Visão geral
+Este repositório é um **monorepo**: contém o front-end e o back-end do projeto, cada um em sua própria pasta.
 
-O sistema tem como objetivo conectar startups com investidores com base em critérios de afinidade, consentimento LGPD, avaliação pós-reunião e fluxos de comunicação. A base desta aplicação já contempla autenticação, perfis de usuário e endpoints essenciais para cadastro e login com JWT.
-
-## Funcionalidades implementadas
-
-- Autenticação com Spring Security + JWT
-- Cadastro de usuários com perfis de Startup e Investor
-- Base de entidades JPA com package by feature
-- Persistência com PostgreSQL
-- Documentação automática da API com Swagger / OpenAPI
-- Estrutura preparada para evolução em matching, consentimento, comunicação e governança
-
-## Stack tecnológica
-
-- Java 21
-- Spring Boot 4.1.1
-- Maven
-- PostgreSQL
-- Spring Data JPA
-- Spring Security
-- JJWT 0.12.6
-- Flyway
-- Springdoc OpenAPI 2.8.5
-- Lombok
-
-## Arquitetura
-
-A estrutura segue a convenção de package by feature:
+## Estrutura do repositório
 
 ```text
-src/main/java/br/com/unio/matchmaking_backend/
-├── auth/
-│   ├── controller/
-│   ├── dto/
-│   ├── entity/
-│   ├── repository/
-│   └── service/
-├── config/
-├── profile/
-│   ├── controller/
-│   ├── entity/
-│   ├── repository/
-│   └── service/
-├── MatchmakingBackendApplication.java
-└── ...
+UNIO/
+├── unio/             # Back-end — Java 21 + Spring Boot
+└── UNIO-front/        # Front-end — React + TypeScript + Vite
 ```
 
-## Requisitos
+Cada pasta tem suas próprias dependências e seu próprio ciclo de build — não há dependência direta de uma na outra além da comunicação via API HTTP.
 
-- Java 21
-- Maven Wrapper (incluído no projeto)
-- PostgreSQL 15+ instalado localmente
+## Atores
 
-## Configuração do PostgreSQL
+| Ator | Descrição |
+|---|---|
+| Startup (Empreendedor) | Cadastra a startup, apresenta o modelo de negócio e busca mentoria/investimento |
+| Investidor Anjo / Mentor | Cadastra perfil de interesse, avalia startups compatíveis e interage com elas |
+| Administrador da Plataforma | Modera cadastros e conteúdo, acompanha métricas do ecossistema |
 
-Crie um banco local chamado `matchmaking_backend` e configure as credenciais no arquivo `src/main/resources/application.properties`:
+## Back-end (`unio/`)
 
-```properties
-spring.application.name=matchmaking-backend
+- **Stack:** Java 21, Spring Boot 4.1.1, Spring Security + JWT, Spring Data JPA, PostgreSQL, Flyway, Springdoc OpenAPI (Swagger), Lombok
+- **Arquitetura:** `package by feature` (cada domínio — `auth`, `profile`, `scorecard` — com seu próprio `controller`, `dto`, `entity`, `repository`, `service`)
 
-spring.datasource.url=jdbc:postgresql://localhost:5432/matchmaking_backend
-spring.datasource.username=postgres
-spring.datasource.password=postgres
-spring.datasource.driver-class-name=org.postgresql.Driver
-
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
-spring.jpa.show-sql=false
-
-app.jwt.secret=matchmaking-dev-secret-key-very-long-1234567890
-```
-
-Se necessário, execute os comandos abaixo no PostgreSQL:
-
-```sql
-CREATE DATABASE matchmaking_backend;
-CREATE USER postgres WITH PASSWORD 'postgres';
-ALTER USER postgres WITH PASSWORD 'postgres';
-GRANT ALL PRIVILEGES ON DATABASE matchmaking_backend TO postgres;
-```
-
-## Execução local
-
-Na raiz do projeto, execute:
+### Como rodar
 
 ```bash
+cd unio
 ./mvnw spring-boot:run
 ```
 
-A aplicação estará disponível em:
+- API: `http://localhost:8080`
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 
-- API: http://localhost:8080
-- Swagger UI: http://localhost:8080/swagger-ui/index.html
+Configure um banco PostgreSQL local (`matchmaking_backend`) e as credenciais em `unio/src/main/resources/application.properties` — veja detalhes no README dentro da pasta `unio/`.
 
-## Endpoints principais
+### Principais endpoints
 
-### Autenticação
+| Método | Rota | Descrição |
+|---|---|---|
+| POST | `/api/auth/register` | Cadastro (startup ou investidor) |
+| POST | `/api/auth/login` | Login, retorna token JWT |
+| GET / PUT | `/api/profile/me` | Perfil do usuário logado |
+| POST | `/api/profile/startup` | Cria perfil de startup (RF01) |
+| POST | `/api/profile/investor` | Cria perfil de investidor (RF02) |
+| GET | `/api/admin/users` | Lista usuários (somente ADMIN) |
+| POST/GET | `/api/scorecard/**` | Cálculo, recomendações e feedback do matchmaking |
 
-- `POST /api/auth/register`
-- `POST /api/auth/login`
+Endpoints de `/api/admin/**` exigem role `ADMIN`. Autenticação é via JWT (stateless).
 
-### Matching
+## Front-end (`UNIO-front/`)
 
-- `GET /api/matching/criteria-weights`
-- `PUT /api/matching/criteria-weights` (apenas ADMIN)
-- `GET /api/matching/recommendations`
-- `POST /api/matching/swipe`
-- `GET /api/matching/mutual`
+- **Stack:** React, TypeScript, Vite, Tailwind CSS, React Router, Recharts, Lucide React, Axios
 
-### Registro de startup
+### Como rodar
 
-```json
-{
-  "email": "startup@teste.com",
-  "password": "12345678",
-  "role": "STARTUP",
-  "segmento": "Fintech",
-  "estagio": "SEED",
-  "localizacao": "Recife",
-  "modeloNegocio": "B2B",
-  "mercadoAlvo": "PMEs",
-  "capitalProcurado": 500000.00,
-  "pitchCanvas": "Descrição da startup"
-}
+```bash
+cd UNIO-front
+npm install
+npm run dev
 ```
 
-### Login
+A aplicação sobe em `http://localhost:5173` por padrão.
 
-```json
-{
-  "email": "startup@teste.com",
-  "password": "12345678"
-}
-```
+### Funcionalidades implementadas
 
-## Segurança
+- Landing page institucional
+- Login / cadastro com painel deslizante
+- Cadastro de startup (RF01) e de investidor (RF02)
+- Painel administrativo: visão geral com métricas, moderação de cadastros, moderação de conteúdo, log de auditoria
+- Integração com a API do back-end (autenticação JWT, perfis)
 
-A API usa autenticação JWT para proteger os endpoints. Os endpoints públicos incluem:
+## Identidade visual
 
-- `/api/auth/**`
-- `/swagger-ui/**`
-- `/v3/api-docs/**`
+Paleta de cores "Deep Forest":
 
-Endpoints administrativos exigem role `ADMIN`.
+| Nome | Hex | Uso |
+|---|---|---|
+| Everest | `#18442A` | Fundo principal, headers, botões primários |
+| Olive | `#45644A` | Elementos secundários, hover, estados ativos |
+| Sand | `#E4DBC4` | Fundo de seções claras, cards, inputs |
+| Off White | `#F3EDE3` | Fundo geral da página |
+
+## Requisitos não funcionais em destaque
+
+- **Segurança:** autenticação JWT, senhas criptografadas, CORS restrito às origens do front
+- **Conformidade:** tratamento de dados pessoais segundo a LGPD
+- **Usabilidade:** interface intuitiva para públicos não técnicos
+- **Auditabilidade:** ações administrativas registradas em log de auditoria
 
 ## Roadmap
 
-- Cadastro e login com JWT
-- Perfis de Startup e Investor
-- Matching com score ponderado
-- Swipe e match mútuo
-- Consentimento LGPD
-- Mensagens e reuniões
-- Avaliação pós-reunião
-- Logs de IA e export de dataset
+- [x] Cadastro e login com JWT
+- [x] Perfis de Startup e Investidor
+- [x] Painel administrativo (moderação e métricas)
+- [ ] Matchmaking por critérios de afinidade (RF03)
+- [ ] Mensagens e agendamento de reuniões (RF05)
+- [ ] Avaliação pós-interação (RF10)
+- [ ] Termo de consentimento LGPD (RF11)
 
-## Observações
+## Equipe
 
-- O projeto segue a convenção `package by feature` para organizar domínio, segurança e integrações.
-- A implementação atual é a base funcional do backend, com foco em demonstrar viabilidade técnica e arquitetura para apresentação acadêmica.
-- O código foi estruturado para permitir evolução em módulos sem acoplamento excessivo.
+_Preencher com o nome dos integrantes do squad._
 
-## Licença
+## Status do projeto
 
-Este projeto foi desenvolvido com fins acadêmicos e de demonstração.
-
-## Status
-
-Backend em funcionamento localmente com PostgreSQL e documentação Swagger ativa para testes de endpoints.
+🚧 Em desenvolvimento — projeto acadêmico em fase de construção do MVP, com front-end e back-end integrados neste repositório.
