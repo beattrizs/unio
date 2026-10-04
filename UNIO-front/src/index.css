@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  /* Rolagem suave pros links âncora do menu da landing page, com um respiro
+     no topo pra o conteúdo não ficar escondido atrás do header fixo. */
+  @apply scroll-smooth scroll-pt-24;
+}
+
+body {
+  @apply m-0 bg-white text-deepgreen;
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
