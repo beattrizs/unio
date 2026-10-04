@@ -113,7 +113,15 @@ Paleta de cores "Deep Forest":
 
 ## Equipe
 
-_Preencher com o nome dos integrantes do squad._
+| Integrante | Frente |
+|---|---|
+| Ana Carolina | Front-end |
+| Ana Beatriz | Front-end |
+| João Carlos | Back-end |
+| Robson Barreto | Back-end |
+| Muriel Bezerra | Dados / IA |
+| Jhonata Teles | QA / Documentação |
+| Gabriel Santos | Gestão / Documentação |
 
 ## Status do projeto
 
