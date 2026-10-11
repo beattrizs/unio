@@ -35,6 +35,7 @@ export default function SignupForm({ onSuccess }: SignupFormProps) {
     }
     if (!EMAIL_REGEX.test(email)) novosErros.email = 'E-mail inválido.';
     if (senha.trim() === '') novosErros.senha = 'Informe a senha.';
+    else if (senha.length < 8) novosErros.senha = 'A senha deve ter no mínimo 8 caracteres.';
     setErros(novosErros);
 
     if (Object.keys(novosErros).length === 0) {

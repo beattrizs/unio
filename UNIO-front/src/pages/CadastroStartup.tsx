@@ -8,6 +8,7 @@ import Textarea from '../components/ui/Textarea';
 import CheckboxGroup from '../components/ui/CheckboxGroup';
 import Button from '../components/ui/Button';
 import api, { getApiErrorMessage } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { SEGMENTOS, ESTAGIOS, NECESSIDADES } from '../data/options';
 
 interface Erros {
@@ -22,6 +23,7 @@ interface Erros {
 
 export default function CadastroStartup() {
   const navigate = useNavigate();
+  const { refreshProfile } = useAuth();
   const [nome, setNome] = useState('');
   const [segmento, setSegmento] = useState('');
   const [estagio, setEstagio] = useState('');
@@ -66,6 +68,7 @@ export default function CadastroStartup() {
       necessidades,
       nome,
     })
+      .then(() => refreshProfile())
       .then(() => navigate('/home-startup', { state: { cadastroSucesso: true } }))
       .catch((error: unknown) => setErroApi(getApiErrorMessage(error, 'Não foi possível salvar o perfil.')))
       .finally(() => setIsLoading(false));
