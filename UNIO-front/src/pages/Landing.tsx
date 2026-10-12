@@ -4,6 +4,7 @@ import HowItWorks from "../components/landing/HowItWorks";
 import AboutSection from "../components/landing/AboutSection";
 import StatsSection from "../components/landing/StatsSection";
 import ServicesSection from "../components/landing/ServicesSection";
+import Logo from "../components/brand/Logo";
 
 // Página institucional pública, antes do login. É só a soma das seções —
 // cada uma cuida do próprio fundo/cor, então aqui é só empilhar na ordem certa.
@@ -21,7 +22,7 @@ export default function Landing() {
       <footer id="contato" className="bg-deepgreen px-4 py-10 text-white/70 sm:px-8">
         <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
           <div>
-            <p className="text-lg font-bold text-white">UNIO</p>
+            <Logo variant="branca" />
             <p className="mt-1 text-sm">
               Conectando startups do Porto Digital a quem acredita nelas.
             </p>

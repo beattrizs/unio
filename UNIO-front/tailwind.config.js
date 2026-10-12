@@ -12,6 +12,16 @@ export default {
         sage: '#96BF8A', // verde sálvia - elementos secundários, estados hover, badges, detalhes de gráfico
         lightgray: '#E8EAE5', // cinza claro - fundo de cards, seções claras, inputs
       },
+      // Fonte do onboarding (carregada via Google Fonts no index.html).
+      // Usar com a classe font-jakarta.
+      fontFamily: {
+        jakarta: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+      },
+      // Sombras suaves tingidas de verde (cards do onboarding)
+      boxShadow: {
+        soft: '0 1px 2px rgba(0, 65, 46, 0.04), 0 8px 24px -12px rgba(0, 65, 46, 0.14)',
+        'soft-lg': '0 2px 4px rgba(0, 65, 46, 0.05), 0 16px 32px -16px rgba(0, 65, 46, 0.22)',
+      },
       // Usada na troca de conteúdo do toggle Startup/Investidor em "Como Funciona"
       // (entra com um leve fade + slide de baixo pra cima, em vez de trocar seco)
       keyframes: {

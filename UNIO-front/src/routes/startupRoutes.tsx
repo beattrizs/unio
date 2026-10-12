@@ -1,27 +1,19 @@
-import { lazy, Suspense } from "react";
-import { Route } from "react-router-dom";
+import { lazy } from "react";
+import { Navigate, Route } from "react-router-dom";
 
-const StartupLayout = lazy(() => import("../pages/startup/StartupLayout"));
-const StartupOverview = lazy(() => import("../pages/startup/pages/StartupOverview"));
-const ComingSoon = lazy(() => import("../pages/startup/pages/ComingSoon"));
+const VisaoGeral = lazy(() => import("../pages/startup/VisaoGeral"));
+const Investidores = lazy(() => import("../pages/startup/Investidores"));
+const PerfilInvestidor = lazy(() => import("../pages/startup/PerfilInvestidor"));
 
-
+// Telas só da startup. Em routes/index.tsx ficam dentro do AppLayout e de
+// ProtectedRoute(startup). Mesmo formato de Fragment do publicRoutes.tsx.
 const startupRoutes = (
   <>
-    <Route
-      path="/home-startup"
-      element={
-        <Suspense fallback={<div className="p-8 text-deepgreen">Carregando...</div>}>
-          <StartupLayout />
-        </Suspense>
-      }
-    >
-      <Route index element={<StartupOverview />} />
-      <Route path="investidores" element={<ComingSoon title="Investidores" />} />
-      <Route path="mensagens" element={<ComingSoon title="Mensagens" />} />
-      <Route path="reunioes" element={<ComingSoon title="Reuniões" />} />
-      <Route path="perfil" element={<ComingSoon title="Perfil e Pitch" />} />
-    </Route>
+    <Route path="/home-startup" element={<VisaoGeral />} />
+    {/* Subpáginas da home antiga (/home-startup/investidores etc.) */}
+    <Route path="/home-startup/*" element={<Navigate to="/home-startup" replace />} />
+    <Route path="/investidores" element={<Investidores />} />
+    <Route path="/investidores/:id" element={<PerfilInvestidor />} />
   </>
 );
 

@@ -7,6 +7,7 @@ import Select from '../components/ui/Select';
 import CheckboxGroup from '../components/ui/CheckboxGroup';
 import Button from '../components/ui/Button';
 import api, { getApiErrorMessage } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { SEGMENTOS, TIPOS_PERFIL, DISPONIBILIDADES } from '../data/options';
 
 interface Erros {
@@ -19,6 +20,7 @@ interface Erros {
 
 export default function CadastroInvestidor() {
   const navigate = useNavigate();
+  const { refreshProfile } = useAuth();
   const [nome, setNome] = useState('');
   const [tipoPerfil, setTipoPerfil] = useState('');
   const [areaInteresse, setAreaInteresse] = useState<string[]>([]);
@@ -29,9 +31,6 @@ export default function CadastroInvestidor() {
   const [erroApi, setErroApi] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Ticket médio não é obrigatório quando o perfil é só "Mentor"
-  const ticketObrigatorio = tipoPerfil !== '' && tipoPerfil !== 'Mentor';
-
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
 
@@ -40,11 +39,16 @@ export default function CadastroInvestidor() {
     if (tipoPerfil === '') novosErros.tipoPerfil = 'Selecione o tipo de perfil.';
     if (disponibilidade === '')
       novosErros.disponibilidade = 'Selecione a disponibilidade.';
-    if (ticketObrigatorio && ticketMedio.trim() === '') {
-      novosErros.ticketMedio = 'Informe o ticket médio de investimento.';
+    // O back (InvestorCreateRequest) exige ticket mínimo e máximo positivos
+    // pra todos os perfis, inclusive "Mentor" — sem isso o cadastro é
+    // recusado e a pessoa não chega ao onboarding.
+    if (!(Number(ticketMedio) > 0)) {
+      novosErros.ticketMedio = 'Informe um ticket médio positivo.';
     }
-    if (ticketObrigatorio && (!ticketMaximo || Number(ticketMaximo) <= 0)) {
+    if (!(Number(ticketMaximo) > 0)) {
       novosErros.ticketMaximo = 'Informe um ticket máximo positivo.';
+    } else if (Number(ticketMedio) > Number(ticketMaximo)) {
+      novosErros.ticketMaximo = 'O ticket máximo não pode ser menor que o ticket médio.';
     }
     setErros(novosErros);
 
@@ -63,6 +67,7 @@ export default function CadastroInvestidor() {
       perfilRisco: tipoPerfil,
       nome,
     })
+      .then(() => refreshProfile())
       .then(() => navigate('/home-investidor', { state: { cadastroSucesso: true } }))
       .catch((error: unknown) => setErroApi(getApiErrorMessage(error, 'Não foi possível salvar o perfil.')))
       .finally(() => setIsLoading(false));
@@ -109,9 +114,7 @@ export default function CadastroInvestidor() {
 
             <Input
               id="ticketMedio"
-              label={`Ticket médio de investimento (R$)${
-                ticketObrigatorio ? '' : ' — opcional para mentor'
-              }`}
+              label="Ticket médio de investimento (R$)"
               type="number"
               min={0}
               step="0.01"

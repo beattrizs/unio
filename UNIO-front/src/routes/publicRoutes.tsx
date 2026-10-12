@@ -4,8 +4,6 @@ import Login from "../pages/Login";
 import EscolhaCadastro from "../pages/EscolhaCadastro";
 import CadastroStartup from "../pages/CadastroStartup";
 import CadastroInvestidor from "../pages/CadastroInvestidor";
-import HomeStartup from "../pages/HomeStartup";
-import HomeInvestidor from "../pages/HomeInvestidor";
 import AccessDenied from "../pages/AccessDenied";
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -26,12 +24,7 @@ const publicRoutes = (
       <Route path="/cadastro-investidor" element={<CadastroInvestidor />} />
     </Route>
     <Route path="/acesso-negado" element={<AccessDenied />} />
-    <Route element={<ProtectedRoute allowedRoles={["startup"]} />}>
-      <Route path="/home-startup" element={<HomeStartup />} />
-    </Route>
-    <Route element={<ProtectedRoute allowedRoles={["investidor"]} />}>
-      <Route path="/home-investidor" element={<HomeInvestidor />} />
-    </Route>
+    {/* /home-startup e /home-investidor ficam em startupRoutes.tsx e investidorRoutes.tsx */}
   </>
 );
 
