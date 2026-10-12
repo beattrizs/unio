@@ -1,6 +1,7 @@
 import { Link, NavLink } from "react-router-dom";
 import { LayoutGrid, UserCheck, FileWarning, History, LogOut, X } from "lucide-react";
 import { PERFIL_ADMIN } from "./data/mockAdmin";
+import Logo from "../../components/brand/Logo";
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -33,7 +34,10 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         }`}
       >
         <div className="flex items-center justify-between px-5 py-5">
-          <span className="text-lg font-bold tracking-wide">UNIO Admin</span>
+          <span className="flex items-center gap-2">
+            <Logo variant="branca" />
+            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-bold tracking-wider text-white/90">ADMIN</span>
+          </span>
           <button
             type="button"
             onClick={onClose}

@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { Menu } from "lucide-react";
 import AdminSidebar from "./AdminSidebar";
 import { AuditProvider } from "./context/AuditContext";
+import Logo from "../../components/brand/Logo";
 
 // Layout compartilhado de toda a área /admin: sidebar + conteúdo da
 // sub-rota atual (via <Outlet />), no estilo "painéis flutuantes" — o
@@ -26,7 +27,8 @@ export default function AdminLayout() {
             <button type="button" onClick={() => setMenuAberto(true)} aria-label="Abrir menu">
               <Menu size={20} />
             </button>
-            <span className="text-lg font-bold tracking-wide">UNIO Admin</span>
+            <Logo variant="branca" size="sm" />
+            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-bold tracking-wider text-white/90">ADMIN</span>
           </header>
 
           <main className="rounded-3xl bg-white p-4 shadow-sm sm:p-6 lg:p-8">

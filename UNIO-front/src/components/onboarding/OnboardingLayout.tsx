@@ -8,6 +8,7 @@ import {
 import type { PerfilOnboarding } from "../../types/onboarding";
 import InfoNote from "./InfoNote";
 import { FOCO_VISIVEL } from "./selecao";
+import Logo from "../brand/Logo";
 
 const BADGE_PERFIL: Record<PerfilOnboarding, string> = {
   investidor: "Investor & Mentor",
@@ -100,7 +101,7 @@ export default function OnboardingLayout({
       >
         <div className={`${CONTAINER_LARGO} flex h-[68px] items-center justify-between gap-3 sm:h-[76px]`}>
           <div className="flex items-center gap-2 sm:gap-3">
-            <span className="text-xl font-bold tracking-tight sm:text-2xl">UNIO</span>
+            <Logo variant="verde" />
             <span className="whitespace-nowrap rounded-full border border-sage/50 bg-sage/25 px-2 py-1 text-[11px] font-semibold sm:px-2.5 sm:text-xs">
               {BADGE_PERFIL[perfil]}
             </span>

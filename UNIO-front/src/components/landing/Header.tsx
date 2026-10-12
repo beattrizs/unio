@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { scrollToSection } from "./scrollToSection";
+import Logo from "../brand/Logo";
 
 // Links do menu: todos apontam para uma seção da própria landing page, pelo
 // "id" usado em cada componente de seção (ver Landing.tsx). O clique rola
@@ -28,9 +29,9 @@ export default function Header() {
         <button
           type="button"
           onClick={() => scrollToSection("hero")}
-          className="border-0 bg-transparent p-0 text-xl font-bold tracking-wide"
+          className="flex items-center rounded-lg border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2 focus-visible:ring-offset-deepgreen"
         >
-          UNIO
+          <Logo variant="branca" />
         </button>
 
         {/* Menu central: só aparece a partir de md (telas médias/grandes) */}

@@ -44,7 +44,8 @@ export default function ConsentCheckbox({
         {checked && <Check size={15} strokeWidth={3} />}
       </span>
       <span className="text-sm text-deepgreen">
-        Concordo em usar {assunto} para gerar recomendações, conforme a{" "}
+        Concordo em usar {assunto} para gerar recomendações e a compartilhar meu contato com quem der match
+        comigo, conforme a{" "}
         <a
           href={privacyHref}
           target="_blank"
