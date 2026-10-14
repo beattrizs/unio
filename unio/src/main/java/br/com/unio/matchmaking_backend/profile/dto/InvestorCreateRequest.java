@@ -1,7 +1,9 @@
 package br.com.unio.matchmaking_backend.profile.dto;
 
+import br.com.unio.matchmaking_backend.profile.entity.DisponibilidadeMentoria;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -32,4 +34,9 @@ public class InvestorCreateRequest {
     private String regiaoInteresse;
 
     private String perfilRisco;
+
+    private DisponibilidadeMentoria disponibilidade;
+
+    @Size(max = 255)
+    private String disponibilidadeObservacao;
 }

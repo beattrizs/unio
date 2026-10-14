@@ -6,6 +6,7 @@ import br.com.unio.matchmaking_backend.auth.repository.UserRepository;
 import br.com.unio.matchmaking_backend.auth.service.AuthUser;
 import br.com.unio.matchmaking_backend.profile.dto.InvestorCreateRequest;
 import br.com.unio.matchmaking_backend.profile.dto.StartupCreateRequest;
+import br.com.unio.matchmaking_backend.profile.entity.DisponibilidadeMentoria;
 import br.com.unio.matchmaking_backend.profile.entity.Investor;
 import br.com.unio.matchmaking_backend.profile.entity.Startup;
 import br.com.unio.matchmaking_backend.profile.repository.InvestorRepository;
@@ -115,6 +116,8 @@ public class ProfileService {
                 .ticketMaximo(request.getTicketMaximo())
                 .regiaoInteresse(request.getRegiaoInteresse())
                 .perfilRisco(request.getPerfilRisco())
+                .disponibilidade(request.getDisponibilidade())
+                .disponibilidadeObservacao(request.getDisponibilidadeObservacao())
                 .build();
 
         investorRepository.save(investor);
@@ -151,6 +154,8 @@ public class ProfileService {
         response.put("ticketMaximo", investor.getTicketMaximo());
         response.put("regiaoInteresse", investor.getRegiaoInteresse());
         response.put("perfilRisco", investor.getPerfilRisco());
+        response.put("disponibilidade", investor.getDisponibilidade());
+        response.put("disponibilidadeObservacao", investor.getDisponibilidadeObservacao());
         return response;
     }
 
@@ -193,6 +198,20 @@ public class ProfileService {
         if (payload.containsKey("ticketMaximo")) investor.setTicketMaximo(parseBigDecimal(payload.get("ticketMaximo")));
         if (payload.containsKey("regiaoInteresse")) investor.setRegiaoInteresse(String.valueOf(payload.get("regiaoInteresse")));
         if (payload.containsKey("perfilRisco")) investor.setPerfilRisco(String.valueOf(payload.get("perfilRisco")));
+        if (payload.containsKey("disponibilidade")) {
+            investor.setDisponibilidade(parseDisponibilidade(payload.get("disponibilidade")));
+        }
+        if (payload.containsKey("disponibilidadeObservacao")) {
+            Object raw = payload.get("disponibilidadeObservacao");
+            String value = raw == null ? null : String.valueOf(raw);
+
+            if (value != null && value.length() > 255) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "disponibilidadeObservacao deve ter no máximo 255 caracteres");
+            }
+
+            investor.setDisponibilidadeObservacao(value);
+        }
 
         investorRepository.save(investor);
         return buildInvestorProfile(user);
@@ -221,6 +240,20 @@ public class ProfileService {
             return BigDecimal.valueOf(number.doubleValue());
         }
         return new BigDecimal(String.valueOf(rawValue));
+    }
+
+    private DisponibilidadeMentoria parseDisponibilidade(Object rawValue) {
+        if (rawValue == null) {
+            return null;
+        }
+        try {
+            return DisponibilidadeMentoria.valueOf(String.valueOf(rawValue));
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Disponibilidade de mentoria inválida",
+                    exception);
+        }
     }
 
     private String asCsv(Object value) {
