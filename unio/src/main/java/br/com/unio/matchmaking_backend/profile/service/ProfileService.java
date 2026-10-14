@@ -77,6 +77,7 @@ public class ProfileService {
 
         Startup startup = Startup.builder()
                 .user(user)
+                .nome(request.getNome())
                 .segmento(request.getSegmento())
                 .estagio(request.getEstagio())
                 .localizacao(request.getLocalizacao())
@@ -133,6 +134,7 @@ public class ProfileService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Perfil Startup não encontrado"));
 
         Map<String, Object> response = buildUserSummary(user);
+        response.put("nome", startup.getNome());
         response.put("segmento", startup.getSegmento());
         response.put("estagio", startup.getEstagio());
         response.put("localizacao", startup.getLocalizacao());
@@ -176,6 +178,17 @@ public class ProfileService {
         Startup startup = startupRepository.findById(user.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Perfil Startup não encontrado"));
 
+        if (payload.containsKey("nome")) {
+            Object raw = payload.get("nome");
+            String value = raw == null ? null : String.valueOf(raw);
+
+            if (value != null && value.length() > 255) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "nome deve ter no máximo 255 caracteres");
+            }
+
+            startup.setNome(value);
+        }
         if (payload.containsKey("segmento")) startup.setSegmento(String.valueOf(payload.get("segmento")));
         if (payload.containsKey("estagio")) startup.setEstagio(String.valueOf(payload.get("estagio")));
         if (payload.containsKey("localizacao")) startup.setLocalizacao(String.valueOf(payload.get("localizacao")));
