@@ -85,6 +85,8 @@ public class ProfileService {
                 .mercadoAlvo(request.getMercadoAlvo())
                 .capitalProcurado(request.getCapitalProcurado())
                 .pitchCanvas(request.getPitchCanvas())
+                .disponibilidade(request.getDisponibilidade())
+                .disponibilidadeObservacao(request.getDisponibilidadeObservacao())
                 .build();
 
         startupRepository.save(startup);
@@ -142,6 +144,8 @@ public class ProfileService {
         response.put("mercadoAlvo", startup.getMercadoAlvo());
         response.put("capitalProcurado", startup.getCapitalProcurado());
         response.put("pitchCanvas", startup.getPitchCanvas());
+        response.put("disponibilidade", startup.getDisponibilidade());
+        response.put("disponibilidadeObservacao", startup.getDisponibilidadeObservacao());
         return response;
     }
 
@@ -196,6 +200,20 @@ public class ProfileService {
         if (payload.containsKey("mercadoAlvo")) startup.setMercadoAlvo(String.valueOf(payload.get("mercadoAlvo")));
         if (payload.containsKey("capitalProcurado")) startup.setCapitalProcurado(parseBigDecimal(payload.get("capitalProcurado")));
         if (payload.containsKey("pitchCanvas")) startup.setPitchCanvas(String.valueOf(payload.get("pitchCanvas")));
+        if (payload.containsKey("disponibilidade")) {
+            startup.setDisponibilidade(parseDisponibilidade(payload.get("disponibilidade")));
+        }
+        if (payload.containsKey("disponibilidadeObservacao")) {
+            Object raw = payload.get("disponibilidadeObservacao");
+            String value = raw == null ? null : String.valueOf(raw);
+
+            if (value != null && value.length() > 255) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "disponibilidadeObservacao deve ter no máximo 255 caracteres");
+            }
+
+            startup.setDisponibilidadeObservacao(value);
+        }
 
         startupRepository.save(startup);
         return buildStartupProfile(user);
