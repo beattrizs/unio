@@ -52,7 +52,9 @@ Configure um banco PostgreSQL local (`matchmaking_backend`) e as credenciais em 
 | Método | Rota | Descrição |
 |---|---|---|
 | POST | `/api/auth/register` | Cadastro (startup ou investidor) |
-| POST | `/api/auth/login` | Login, retorna token JWT |
+| POST | `/api/auth/login` | Login, retorna token JWT (válido por 1 hora) |
+| POST | `/api/auth/forgot-password` | Solicita a recuperação de senha (`{ "email": "..." }`) |
+| POST | `/api/auth/reset-password` | Redefine a senha (`{ "token": "...", "newPassword": "..." }`) |
 | GET / PUT | `/api/profile/me` | Perfil do usuário logado |
 | POST | `/api/profile/startup` | Cria perfil de startup (RF01) |
 | POST | `/api/profile/investor` | Cria perfil de investidor (RF02) |
