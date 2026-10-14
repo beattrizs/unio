@@ -55,6 +55,7 @@ configurável e versionável. Projeto acadêmico com potencial de virar produto.
 
 ### Tickets pós-MVP (outubro)
 - [x] T01 — Disponibilidade do investidor/mentor (RF02) — 2026-10-14
+- [x] T02 — Campo nome na Startup (RF01) — 2026-10-14
 - [x] T06 — Métricas de uso (RF09) — 2026-10-14
 
 ### Bloco E — Testes (pendente)
