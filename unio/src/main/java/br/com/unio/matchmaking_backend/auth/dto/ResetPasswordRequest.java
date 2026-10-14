@@ -1,0 +1,24 @@
+package br.com.unio.matchmaking_backend.auth.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ResetPasswordRequest {
+
+    @NotBlank(message = "Token é obrigatório")
+    private String token;
+
+    @NotBlank(message = "Nova senha é obrigatória")
+    @Size(min = 8, message = "Senha deve ter no mínimo 8 caracteres")
+    private String newPassword;
+}

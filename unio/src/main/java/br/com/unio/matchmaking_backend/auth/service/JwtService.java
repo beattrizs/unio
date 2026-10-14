@@ -21,6 +21,9 @@ public class JwtService {
     @Value("${app.jwt.secret:matchmaking-dev-secret-key-very-long-1234567890}")
     private String secret;
 
+    @Value("${app.jwt.expiration-minutes:60}")
+    private long expirationMinutes;
+
     private SecretKey signingKey;
 
     @PostConstruct
@@ -35,7 +38,7 @@ public class JwtService {
             .claim("userId", user.getId())
             .claim("role", user.getRole().name())
             .issuedAt(Date.from(now))
-            .expiration(Date.from(now.plus(8, ChronoUnit.HOURS)))
+            .expiration(Date.from(now.plus(expirationMinutes, ChronoUnit.MINUTES)))
             .signWith(signingKey)
             .compact();
     }
