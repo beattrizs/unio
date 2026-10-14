@@ -3,6 +3,7 @@ package br.com.unio.matchmaking_backend.profile.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,6 +17,10 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class StartupCreateRequest {
+
+    @NotBlank(message = "Nome é obrigatório")
+    @Size(max = 255, message = "Nome deve ter no máximo 255 caracteres")
+    private String nome;
 
     @NotBlank(message = "Segmento é obrigatório")
     private String segmento;

@@ -50,7 +50,7 @@ public class RecommendationService {
     private String resolveStartupName(UUID startupId) {
         if (startupId == null) return "unknown";
         return startupRepository.findById(startupId.getLeastSignificantBits())
-                .map(Startup::getSegmento)
+                .map(Startup::getNome)
                 .orElse(startupId.toString());
     }
 }

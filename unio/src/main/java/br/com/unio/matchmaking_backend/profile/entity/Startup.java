@@ -34,6 +34,9 @@ public class Startup {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
+    @Column(nullable = false, length = 255)
+    private String nome;
+
     @Column(nullable = false)
     private String segmento;
 
