@@ -519,3 +519,27 @@ O banco tem mais linhas, mas o MVP não tem restrição de volume.
 - 5 fatores persistidos (era 4)
 - REGIAO: 100.00 (era 0.00)
 - Soma das dimensões = 92.50 = score final
+
+
+## D027 — updateCurrentProfile usa Map<String, Object> sem Bean Validation
+
+**Contexto:** O `ProfileService.updateCurrentProfile` recebe
+`Map<String, Object>` em vez de DTOs tipados. Validações declarativas
+(@Size, @NotNull, @Positive) não são aplicadas no update — só no
+create (que usa `InvestorCreateRequest` / `StartupCreateRequest`).
+Durante o T01, um valor de `disponibilidadeObservacao` acima de 255
+caracteres causava 500 (violação de coluna) em vez de 400.
+
+**Decisão:** Manter o padrão atual no MVP. Adicionar validação manual
+nos campos críticos (ex.: `disponibilidadeObservacao` com limite de
+255).
+
+**Justificativa:** Refatorar o update para DTOs tipados
+(`InvestorUpdateRequest`, `StartupUpdateRequest`) é o caminho
+correto, mas está fora do escopo dos tickets atuais.
+
+**Impacto:** Todo novo campo no update precisa de validação manual
+até a refatoração. Registrar como trabalho futuro (D011).
+
+**Trabalho futuro:** refatorar `updateCurrentProfile` para aceitar
+DTOs tipados por role.

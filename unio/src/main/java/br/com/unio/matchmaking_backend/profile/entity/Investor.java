@@ -3,6 +3,8 @@ package br.com.unio.matchmaking_backend.profile.entity;
 import br.com.unio.matchmaking_backend.auth.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -51,4 +53,11 @@ public class Investor {
 
     @Column(name = "perfil_risco")
     private String perfilRisco;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "disponibilidade", length = 20)
+    private DisponibilidadeMentoria disponibilidade;
+
+    @Column(name = "disponibilidade_observacao", length = 255)
+    private String disponibilidadeObservacao;
 }
