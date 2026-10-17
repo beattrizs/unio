@@ -6,6 +6,7 @@ import {
   MessageSquare,
   User,
   Users,
+  Megaphone,
   type LucideIcon,
 } from "lucide-react";
 import type { PerfilApp } from "../../types/recomendacoes";
@@ -60,6 +61,8 @@ export const CONFIG_PERFIL: Record<PerfilApp, ConfigPerfil> = {
       { to: "/home-startup", rotulo: "Visão geral", icone: LayoutDashboard },
       { to: "/investidores", rotulo: "Investidores", icone: Users },
       ...COMUNS,
+      // Right after "Meu perfil" (last item of COMUNS), as in the Figma
+      { to: "/pitch-canvas", rotulo: "Pitch & Canvas", icone: Megaphone },
     ],
     revisar: { to: "/onboarding/startup?passo=1", rotulo: "Revisar meu onboarding" },
   },
