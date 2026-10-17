@@ -5,15 +5,6 @@ import {
 } from "axios";
 import { ADMIN_EMAIL, ADMIN_SENHA } from "../data/store";
 
-// BACK SIMULADO — só pra testar o front sem o back (unio/) rodando.
-// Liga com VITE_MOCK_BACKEND=true no .env (ver services/api.ts); com a
-// variável desligada, este arquivo nem é carregado.
-//
-// Responde às mesmas rotas que o front usa, imitando os status e mensagens
-// do back (409 e-mail já cadastrado, 401 credenciais inválidas, 404 perfil
-// ainda não criado...). Os dados ficam no localStorage, na chave abaixo —
-// apague-a pra "zerar o banco".
-
 const CHAVE_BANCO = "unio_mock_backend";
 const LATENCIA_MS = 300;
 
@@ -27,12 +18,26 @@ interface UsuarioMock {
   createdAt: string;
 }
 
+type PitchStatusMock = "DRAFT" | "IN_REVIEW" | "PUBLISHED" | "REJECTED";
+
+// Same shape the front assumes in types/pitch.ts (StartupPitchResponse)
+interface PitchMock {
+  status: PitchStatusMock;
+  shortPitch: string;
+  videoUrl: string | null;
+  updatedAt: string;
+  leanCanvas: Record<string, string>;
+}
+
 interface BancoMock {
   proximoId: number;
   usuarios: UsuarioMock[];
   // perfis por id do usuário
   startups: Record<number, Record<string, unknown>>;
   investidores: Record<number, Record<string, unknown>>;
+  // pitch + Lean Canvas per startup user id (missing in databases saved
+  // before this field existed, hence optional)
+  pitches?: Record<number, PitchMock>;
 }
 
 function bancoInicial(): BancoMock {
@@ -148,6 +153,67 @@ function exigirPositivo(valor: unknown, mensagem: string) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Pitch & Lean Canvas (/api/startups/me/pitch)
+// ---------------------------------------------------------------------------
+
+const SHORT_PITCH_MAX = 280;
+const CANVAS_BLOCK_MAX = 500;
+const CANVAS_FIELDS = [
+  "problem",
+  "customerSegments",
+  "uniqueValueProposition",
+  "solution",
+  "channels",
+  "revenueStreams",
+  "costStructure",
+  "keyMetrics",
+  "unfairAdvantage",
+];
+
+// Sample pitch given to a startup on its first GET, already published
+function samplePitch(): PitchMock {
+  return {
+    status: "PUBLISHED",
+    shortPitch:
+      "Sensores IoT e IA que reduzem em até 40% o consumo de água na irrigação de pequenos e médios produtores do Nordeste, com payback em menos de 6 meses.",
+    // Valid YouTube format, but a placeholder id (no real video behind it)
+    videoUrl: "https://www.youtube.com/watch?v=EXEMPLO0001",
+    updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    leanCanvas: {
+      problem:
+        "Irrigação feita no olho: até metade da água é desperdiçada. Conta de energia das bombas pesa no custo. Produtor não sabe quando e quanto irrigar.",
+      customerSegments:
+        "Pequenos e médios produtores de fruticultura irrigada do Vale do São Francisco. Early adopters: cooperativas de manga e uva de Petrolina e Juazeiro.",
+      uniqueValueProposition: "Irrigue só o necessário: 40% menos água e energia, sem trocar o sistema que você já tem.",
+      solution:
+        "Sensores de umidade de solo de baixo custo, app com recomendação diária de irrigação e acionamento remoto das bombas.",
+      channels: "Parceria com cooperativas e revendas de insumos, dias de campo e assistência técnica rural.",
+      revenueStreams: "Assinatura mensal por hectare monitorado e venda dos kits de sensores. Ticket médio de R$ 450/mês.",
+      costStructure: "Hardware dos sensores, conectividade LoRa, equipe técnica de campo, nuvem e desenvolvimento do app.",
+      keyMetrics: "Hectares monitorados, litros de água economizados por hectare, churn mensal e CAC por cooperativa.",
+      unfairAdvantage:
+        "Modelo de recomendação treinado com 3 safras de dados locais e sensor próprio com custo 5x menor que o importado.",
+    },
+  };
+}
+
+function pitchesOf(banco: BancoMock) {
+  banco.pitches ??= {};
+  return banco.pitches;
+}
+
+function requireStartup(banco: BancoMock, config: InternalAxiosRequestConfig) {
+  const usuario = exigirUsuario(banco, config);
+  if (usuario.role !== "STARTUP") throw new ErroHttp(403, "Usuário não é do tipo STARTUP");
+  perfilCompleto(banco, usuario); // 404 if the startup profile doesn't exist yet
+  return usuario;
+}
+
+function badRequest(message: string): never {
+  throw new ErroHttp(400, message, { errors: [{ defaultMessage: message }] });
+}
+
 type Rota = (args: {
   banco: BancoMock;
   corpo: Record<string, unknown>;
@@ -232,6 +298,51 @@ const ROTAS: Record<string, Rota> = {
     }
     banco.investidores[usuario.id] = corpo;
     return perfilCompleto(banco, usuario);
+  },
+
+  "GET /api/startups/me/pitch": ({ banco, config }) => {
+    const usuario = requireStartup(banco, config);
+    const pitches = pitchesOf(banco);
+    pitches[usuario.id] ??= samplePitch();
+    return pitches[usuario.id];
+  },
+
+  // Saves the changes; the startup still has to publish them
+  "PUT /api/startups/me/pitch": ({ banco, corpo, config }) => {
+    const usuario = requireStartup(banco, config);
+    const shortPitch = String(corpo.shortPitch ?? "");
+    if (shortPitch.length > SHORT_PITCH_MAX) {
+      badRequest(`shortPitch deve ter no máximo ${SHORT_PITCH_MAX} caracteres`);
+    }
+    const canvasBody = (corpo.leanCanvas ?? {}) as Record<string, unknown>;
+    const leanCanvas: Record<string, string> = {};
+    for (const field of CANVAS_FIELDS) {
+      const value = String(canvasBody[field] ?? "");
+      if (value.length > CANVAS_BLOCK_MAX) {
+        badRequest(`leanCanvas.${field} deve ter no máximo ${CANVAS_BLOCK_MAX} caracteres`);
+      }
+      leanCanvas[field] = value;
+    }
+    const videoUrl = typeof corpo.videoUrl === "string" && corpo.videoUrl.trim() ? corpo.videoUrl : null;
+    const pitch: PitchMock = {
+      status: "DRAFT",
+      shortPitch,
+      videoUrl,
+      updatedAt: new Date().toISOString(),
+      leanCanvas,
+    };
+    pitchesOf(banco)[usuario.id] = pitch;
+    return pitch;
+  },
+
+  // Submits the saved version for moderation
+  "POST /api/startups/me/pitch/publish": ({ banco, config }) => {
+    const usuario = requireStartup(banco, config);
+    const pitches = pitchesOf(banco);
+    const pitch = pitches[usuario.id] ?? samplePitch();
+    if (!pitch.shortPitch.trim()) badRequest("Pitch curto é obrigatório para publicar");
+    pitches[usuario.id] = { ...pitch, status: "IN_REVIEW", updatedAt: new Date().toISOString() };
+    return pitches[usuario.id];
   },
 
   "GET /api/admin/users": ({ banco, config }) => {
