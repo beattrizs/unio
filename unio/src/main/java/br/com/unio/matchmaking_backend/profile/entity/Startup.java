@@ -60,6 +60,9 @@ public class Startup {
     @Column(name = "pitch_canvas", columnDefinition = "TEXT")
     private String pitchCanvas;
 
+    @Column(name = "pitch_file_url", length = 500)
+    private String pitchFileUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "disponibilidade", length = 20)
     private DisponibilidadeMentoria disponibilidade;

@@ -11,16 +11,23 @@ import br.com.unio.matchmaking_backend.profile.entity.Investor;
 import br.com.unio.matchmaking_backend.profile.entity.Startup;
 import br.com.unio.matchmaking_backend.profile.repository.InvestorRepository;
 import br.com.unio.matchmaking_backend.profile.repository.StartupRepository;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
@@ -30,6 +37,9 @@ public class ProfileService {
     private final UserRepository userRepository;
     private final StartupRepository startupRepository;
     private final InvestorRepository investorRepository;
+
+    @Value("${app.upload.dir:./uploads/pitch/}")
+    private String uploadDirectory;
 
     // ============================================================
     // Leitura e atualização do perfil atual
@@ -56,6 +66,53 @@ public class ProfileService {
             case INVESTOR -> updateInvestorProfile(user, payload);
             case ADMIN -> buildUserSummary(user);
         };
+    }
+
+    @Transactional
+    public String uploadPitch(AuthUser authUser, MultipartFile file) {
+        if (authUser.getRole() != Role.STARTUP) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Usuário não é do tipo STARTUP");
+        }
+
+        if (file == null || file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Arquivo de pitch é obrigatório");
+        }
+        if (file.getSize() > 10L * 1024 * 1024) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Arquivo deve ter no máximo 10 MB");
+        }
+
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || !originalFilename.toLowerCase().endsWith(".pdf")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Arquivo deve estar no formato PDF");
+        }
+
+        Startup startup = startupRepository.findById(authUser.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Perfil Startup não encontrado"));
+
+        Path directory = Paths.get(uploadDirectory);
+        String filename = UUID.randomUUID() + ".pdf";
+        Path target = directory.resolve(filename);
+
+        try {
+            Files.createDirectories(directory);
+            file.transferTo(target);
+
+            String previousPitchUrl = startup.getPitchFileUrl();
+            if (previousPitchUrl != null && !previousPitchUrl.isBlank()) {
+                Path previousFile = directory.resolve(Paths.get(previousPitchUrl).getFileName().toString());
+                Files.deleteIfExists(previousFile);
+            }
+
+            String pitchUrl = "/uploads/pitch/" + filename;
+            startup.setPitchFileUrl(pitchUrl);
+            startupRepository.save(startup);
+            return pitchUrl;
+        } catch (IOException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Não foi possível salvar o arquivo de pitch",
+                    exception);
+        }
     }
 
     // ============================================================
@@ -144,6 +201,7 @@ public class ProfileService {
         response.put("mercadoAlvo", startup.getMercadoAlvo());
         response.put("capitalProcurado", startup.getCapitalProcurado());
         response.put("pitchCanvas", startup.getPitchCanvas());
+        response.put("pitchFileUrl", startup.getPitchFileUrl());
         response.put("disponibilidade", startup.getDisponibilidade());
         response.put("disponibilidadeObservacao", startup.getDisponibilidadeObservacao());
         return response;
