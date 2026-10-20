@@ -58,6 +58,7 @@ configurável e versionável. Projeto acadêmico com potencial de virar produto.
 - [x] T02 — Campo nome na Startup (RF01) — 2026-10-14
 - [x] T03 — Disponibilidade na Startup (RF01/RF02) — 2026-10-14
 - [x] T06 — Métricas de uso (RF09) — 2026-10-14
+- [x] T11 — Upload de pitch (RF06) — 2026-10-20
 
 ### Bloco E — Testes (pendente)
 - [ ] Tarefa 14 — Testes unitários
