@@ -7,43 +7,37 @@ import CompanyDataCard from "../../components/profile/CompanyDataCard";
 import PendingChangesBar from "../../components/profile/PendingChangesBar";
 import ProfileCardPreview from "../../components/profile/ProfileCardPreview";
 import ProfilePageSkeleton from "../../components/profile/ProfilePageSkeleton";
+import TeamSection from "../../components/profile/team/TeamSection";
 import Tabs, { TabPanel, type TabItem } from "../../components/ui/Tabs";
 import ContatosForm from "../../components/unios/ContatosForm";
 import { useStartupProfileEditor } from "../../hooks/useStartupProfileEditor";
+import { useStartupTeam } from "../../hooks/useStartupTeam";
 
 type ProfileTab = "dados" | "equipe" | "documentos" | "visibilidade";
 
 const TABS_ID = "perfil-tabs";
 
-// No count badges: the API doesn't provide them
-const TABS: TabItem<ProfileTab>[] = [
-  { id: "dados", label: "Dados gerais", icon: Building2 },
-  { id: "equipe", label: "Equipe", icon: Users },
-  { id: "documentos", label: "Documentos", icon: FileText },
-  { id: "visibilidade", label: "Visibilidade", icon: Eye },
-];
+function profileTabs(teamCount: number | null): TabItem<ProfileTab>[] {
+  return [
+    { id: "dados", label: "Dados gerais", icon: Building2 },
+    { id: "equipe", label: teamCount ? `Equipe (${teamCount})` : "Equipe", icon: Users },
+    { id: "documentos", label: "Documentos", icon: FileText },
+    { id: "visibilidade", label: "Visibilidade", icon: Eye },
+  ];
+}
 
-// Tabs the API doesn't support yet. Same notice as pages/EmBreve.tsx, without
-// its page header (this page already has one).
-const COMING_SOON: Record<Exclude<ProfileTab, "dados">, string> = {
-  equipe: "Em breve você poderá gerenciar a equipe da startup aqui.",
+const COMING_SOON: Record<Exclude<ProfileTab, "dados" | "equipe">, string> = {
   documentos: "Em breve você poderá enviar e organizar os documentos da startup aqui.",
   visibilidade: "Em breve você poderá escolher quem vê o perfil da startup aqui.",
 };
 
-// "Meu Perfil" of the startup (/meu-perfil). Only "Dados gerais" has content;
-// the other tabs are "Em breve". Data comes from GET /api/profile/me via
-// useStartupProfileEditor. The editor state lives here and the panels stay
-// mounted, so switching tabs keeps unsaved changes.
 export default function StartupProfile() {
   const editor = useStartupProfileEditor();
   const { saved, values, errors } = editor;
   const [activeTab, setActiveTab] = useState<ProfileTab>("dados");
-  // Header name follows the saved profile, not the draft being typed
+  const team = useStartupTeam();
   const savedName = saved?.nome.trim();
 
-  // Save can be clicked from any tab; show the form first so the hook can
-  // focus the first invalid field (a hidden panel can't take focus)
   function handleSave() {
     flushSync(() => setActiveTab("dados"));
     void editor.save();
@@ -68,7 +62,6 @@ export default function StartupProfile() {
     );
   } else {
     content = (
-      // Side by side with the same height on lg+, stacked on mobile
       <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-5">
         <div className="min-w-0 lg:col-span-3">
           <CompanyDataCard
@@ -99,7 +92,7 @@ export default function StartupProfile() {
       <Tabs
         label="Seções do perfil"
         idPrefix={TABS_ID}
-        tabs={TABS}
+         tabs={profileTabs(team.count)}
         activeTab={activeTab}
         onChange={setActiveTab}
         variant="pill"
@@ -108,10 +101,13 @@ export default function StartupProfile() {
       <TabPanel idPrefix={TABS_ID} tab="dados" activeTab={activeTab} className="mt-6">
         {content}
 
-        {/* Contacts shared after a match (unchanged, already part of "Meu perfil").
-            Rendered bare, as EmBreve did: the section already has its own mt-6 */}
         <ContatosForm />
       </TabPanel>
+      
+       <TabPanel idPrefix={TABS_ID} tab="equipe" activeTab={activeTab} className="mt-6">
+        <TeamSection team={team} startupName={savedName ?? ""} />
+      </TabPanel>
+
 
       {(Object.keys(COMING_SOON) as (keyof typeof COMING_SOON)[]).map((tab) => (
         <TabPanel key={tab} idPrefix={TABS_ID} tab={tab} activeTab={activeTab} className="mt-6">
