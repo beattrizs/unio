@@ -126,6 +126,17 @@ function resumoUsuario(usuario: UsuarioMock) {
   };
 }
 
+const STARTUP_FIELDS = [
+  "nome",
+  "segmento",
+  "estagio",
+  "localizacao",
+  "modeloNegocio",
+  "mercadoAlvo",
+  "capitalProcurado",
+  "pitchCanvas",
+];
+
 function perfilCompleto(banco: BancoMock, usuario: UsuarioMock) {
   if (usuario.role === "ADMIN") return resumoUsuario(usuario);
   const perfil =
@@ -134,7 +145,24 @@ function perfilCompleto(banco: BancoMock, usuario: UsuarioMock) {
     const tipo = usuario.role === "STARTUP" ? "Startup" : "Investor";
     throw new ErroHttp(404, `Perfil ${tipo} não encontrado`);
   }
+  if (usuario.role === "STARTUP") {
+    const campos = Object.fromEntries(STARTUP_FIELDS.map((campo) => [campo, perfil[campo] ?? null]));
+    return { ...resumoUsuario(usuario), ...campos };
+  }
   return { ...resumoUsuario(usuario), ...perfil };
+}
+
+function atualizarStartup(perfil: Record<string, unknown>, corpo: Record<string, unknown>) {
+  if ("nome" in corpo && corpo.nome != null && String(corpo.nome).length > 255) {
+    throw new ErroHttp(400, "nome deve ter no máximo 255 caracteres");
+  }
+  for (const campo of STARTUP_FIELDS) {
+    if (!(campo in corpo)) continue;
+    const valor = corpo[campo];
+    if (campo === "capitalProcurado") perfil[campo] = valor == null ? null : Number(valor);
+    else if (campo === "nome") perfil[campo] = valor == null ? null : String(valor);
+    else perfil[campo] = String(valor);
+  }
 }
 
 function exigirCampos(corpo: Record<string, unknown>, campos: Record<string, string>) {
@@ -152,10 +180,6 @@ function exigirPositivo(valor: unknown, mensagem: string) {
     throw new ErroHttp(400, mensagem, { errors: [{ defaultMessage: mensagem }] });
   }
 }
-
-// ---------------------------------------------------------------------------
-// Pitch & Lean Canvas (/api/startups/me/pitch)
-// ---------------------------------------------------------------------------
 
 const SHORT_PITCH_MAX = 280;
 const CANVAS_BLOCK_MAX = 500;
@@ -265,7 +289,8 @@ const ROTAS: Record<string, Rota> = {
     const perfis = usuario.role === "STARTUP" ? banco.startups : banco.investidores;
     if (usuario.role !== "ADMIN") {
       perfilCompleto(banco, usuario); // 404 se ainda não existe
-      perfis[usuario.id] = { ...perfis[usuario.id], ...corpo };
+      if (usuario.role === "STARTUP") atualizarStartup(perfis[usuario.id], corpo);
+      else perfis[usuario.id] = { ...perfis[usuario.id], ...corpo };
     }
     return perfilCompleto(banco, usuario);
   },
