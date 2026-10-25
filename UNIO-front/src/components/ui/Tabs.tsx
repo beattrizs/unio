@@ -18,7 +18,27 @@ interface TabsProps<T extends string> {
   tabs: TabItem<T>[];
   activeTab: T;
   onChange: (tab: T) => void;
+  variant?: "underline" | "pill";
 }
+
+const LIST_CLASS = {
+  underline: "flex gap-1 overflow-x-auto border-b border-lightgray",
+  // p-1: room for the focus ring, which overflow-x-auto would clip
+  pill: "flex gap-2 overflow-x-auto p-1",
+};
+
+const TAB_CLASS = {
+  underline: {
+    base: "-mb-px inline-flex min-h-[48px] shrink-0 items-center gap-2 rounded-t-xl border-b-2 px-4 text-sm transition-colors",
+    selected: "border-deepgreen font-semibold text-deepgreen",
+    idle: "border-transparent text-deepgreen/75 hover:border-sage hover:text-deepgreen",
+  },
+  pill: {
+    base: "inline-flex min-h-[48px] shrink-0 items-center gap-2 rounded-full px-5 text-sm transition-colors",
+    selected: "bg-deepgreen font-semibold text-white",
+    idle: "text-deepgreen/75 hover:bg-lightgray hover:text-deepgreen",
+  },
+};
 
 function tabDomId(prefix: string, tab: string) {
   return `${prefix}-tab-${tab}`;
