@@ -29,15 +29,23 @@ interface PitchMock {
   leanCanvas: Record<string, string>;
 }
 
+type OnboardingStatusMock = "PENDENTE" | "CONCLUIDO" | "PULADO";
+
+
+interface OnboardingMock {
+  status: OnboardingStatusMock;
+  respostas: Record<string, unknown>;
+  atualizadoEm: string | null;
+}
+
 interface BancoMock {
   proximoId: number;
   usuarios: UsuarioMock[];
   // perfis por id do usuário
   startups: Record<number, Record<string, unknown>>;
   investidores: Record<number, Record<string, unknown>>;
-  // pitch + Lean Canvas per startup user id (missing in databases saved
-  // before this field existed, hence optional)
   pitches?: Record<number, PitchMock>;
+  onboarding?: Record<number, OnboardingMock>;
 }
 
 function bancoInicial(): BancoMock {
@@ -238,6 +246,17 @@ function badRequest(message: string): never {
   throw new ErroHttp(400, message, { errors: [{ defaultMessage: message }] });
 }
 
+const ONBOARDING_STATUSES: OnboardingStatusMock[] = ["PENDENTE", "CONCLUIDO", "PULADO"];
+const ONBOARDING_MAX_BYTES = 20 * 1024;
+
+function requireOnboardingUser(banco: BancoMock, config: InternalAxiosRequestConfig) {
+  const usuario = exigirUsuario(banco, config);
+  if (usuario.role !== "STARTUP" && usuario.role !== "INVESTOR") {
+    throw new ErroHttp(403, "Onboarding disponível apenas para STARTUP e INVESTOR");
+  }
+  return usuario;
+}
+
 type Rota = (args: {
   banco: BancoMock;
   corpo: Record<string, unknown>;
@@ -368,6 +387,39 @@ const ROTAS: Record<string, Rota> = {
     if (!pitch.shortPitch.trim()) badRequest("Pitch curto é obrigatório para publicar");
     pitches[usuario.id] = { ...pitch, status: "IN_REVIEW", updatedAt: new Date().toISOString() };
     return pitches[usuario.id];
+  },
+
+   "GET /api/profile/onboarding": ({ banco, config }) => {
+    const usuario = requireOnboardingUser(banco, config);
+    return banco.onboarding?.[usuario.id] ?? { status: "PENDENTE", respostas: {}, atualizadoEm: null };
+  },
+
+  "PUT /api/profile/onboarding": ({ banco, corpo, config }) => {
+    const usuario = requireOnboardingUser(banco, config);
+    const registros = (banco.onboarding ??= {});
+    const atual = registros[usuario.id] ?? { status: "PENDENTE", respostas: {}, atualizadoEm: null };
+
+    const status = corpo.status;
+    if (status != null && !ONBOARDING_STATUSES.includes(status as OnboardingStatusMock)) {
+      throw new ErroHttp(400, "Status inválido");
+    }
+    let respostas = atual.respostas;
+    if (corpo.respostas != null) {
+      if (typeof corpo.respostas !== "object" || Array.isArray(corpo.respostas)) {
+        throw new ErroHttp(400, "JSON malformado");
+      }
+      const json = JSON.stringify(corpo.respostas);
+      if (new TextEncoder().encode(json).length > ONBOARDING_MAX_BYTES) {
+        throw new ErroHttp(400, "Respostas excedem o limite de 20 KB");
+      }
+      respostas = JSON.parse(json) as Record<string, unknown>;
+    }
+    registros[usuario.id] = {
+      status: (status as OnboardingStatusMock | null | undefined) ?? atual.status,
+      respostas,
+      atualizadoEm: new Date().toISOString(),
+    };
+    return registros[usuario.id];
   },
 
   "GET /api/admin/users": ({ banco, config }) => {
