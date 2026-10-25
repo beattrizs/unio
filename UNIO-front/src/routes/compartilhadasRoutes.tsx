@@ -6,6 +6,7 @@ import ContatosForm from "../components/unios/ContatosForm";
 const PaginaSalvos = lazy(() => import("../pages/shared/PaginaSalvos"));
 const PaginaMeusUnios = lazy(() => import("../pages/shared/PaginaMeusUnios"));
 const EmBreve = lazy(() => import("../pages/EmBreve"));
+const StartupProfile = lazy(() => import("../pages/startup/StartupProfile"));
 
 // Rotas iguais para investidor e startup (mesmos itens da sidebar). Cada
 // perfil vê o seu conteúdo; Salvos e Meus unios são a mesma página com a
@@ -56,15 +57,7 @@ const compartilhadasRoutes = (
               <ContatosForm />
             </EmBreve>
           }
-          startup={
-            <EmBreve
-              titulo="Meu perfil"
-              texto="Em breve você poderá editar o perfil e o pitch da startup aqui. As respostas do onboarding já podem ser revisadas."
-              link={{ para: "/onboarding/startup?passo=1", rotulo: "Revisar meu onboarding" }}
-            >
-              <ContatosForm />
-            </EmBreve>
-          }
+          startup={<StartupProfile />}
         />
       }
     />
