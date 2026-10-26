@@ -1,5 +1,6 @@
 package br.com.unio.matchmaking_backend.profile.dto;
 
+import br.com.unio.matchmaking_backend.profile.entity.DisponibilidadeMentoria;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -42,4 +43,9 @@ public class StartupCreateRequest {
     private BigDecimal capitalProcurado;
 
     private String pitchCanvas;
+
+    private DisponibilidadeMentoria disponibilidade;
+
+    @Size(max = 255, message = "disponibilidadeObservacao deve ter no máximo 255 caracteres")
+    private String disponibilidadeObservacao;
 }
