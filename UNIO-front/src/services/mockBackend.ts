@@ -145,6 +145,43 @@ const STARTUP_FIELDS = [
   "pitchCanvas",
 ];
 
+const INVESTOR_FIELDS = [
+  "segmentosInteresse",
+  "estagiosInteresse",
+  "ticketMinimo",
+  "ticketMaximo",
+  "regiaoInteresse",
+  "perfilRisco",
+  "disponibilidade",
+  "disponibilidadeObservacao",
+];
+const DISPONIBILIDADES_MENTORIA = ["BAIXA", "MEDIA", "ALTA"];
+
+function atualizarInvestidor(perfil: Record<string, unknown>, corpo: Record<string, unknown>) {
+  for (const campo of INVESTOR_FIELDS) {
+    if (!(campo in corpo)) continue;
+    const valor = corpo[campo];
+    if (campo === "disponibilidade") {
+      // null clears it; any other value must match the enum exactly
+      if (valor != null && !DISPONIBILIDADES_MENTORIA.includes(String(valor))) {
+        throw new ErroHttp(400, "Disponibilidade de mentoria inválida");
+      }
+      perfil[campo] = valor == null ? null : String(valor);
+    } else if (campo === "disponibilidadeObservacao") {
+      if (valor != null && String(valor).length > 255) {
+        throw new ErroHttp(400, "disponibilidadeObservacao deve ter no máximo 255 caracteres");
+      }
+      perfil[campo] = valor == null ? null : String(valor);
+    } else if (campo === "ticketMinimo" || campo === "ticketMaximo") {
+      perfil[campo] = valor == null ? null : Number(valor);
+    } else if (campo === "segmentosInteresse" || campo === "estagiosInteresse") {
+      perfil[campo] = Array.isArray(valor) ? valor.map((item) => String(item).trim()).filter(Boolean) : [];
+    } else {
+      perfil[campo] = String(valor);
+    }
+  }
+}
+
 function perfilCompleto(banco: BancoMock, usuario: UsuarioMock) {
   if (usuario.role === "ADMIN") return resumoUsuario(usuario);
   const perfil =
@@ -157,7 +194,7 @@ function perfilCompleto(banco: BancoMock, usuario: UsuarioMock) {
     const campos = Object.fromEntries(STARTUP_FIELDS.map((campo) => [campo, perfil[campo] ?? null]));
     return { ...resumoUsuario(usuario), ...campos };
   }
-  return { ...resumoUsuario(usuario), ...perfil };
+   return { ...resumoUsuario(usuario), disponibilidade: null, disponibilidadeObservacao: null, ...perfil };
 }
 
 function atualizarStartup(perfil: Record<string, unknown>, corpo: Record<string, unknown>) {
@@ -309,7 +346,7 @@ const ROTAS: Record<string, Rota> = {
     if (usuario.role !== "ADMIN") {
       perfilCompleto(banco, usuario); // 404 se ainda não existe
       if (usuario.role === "STARTUP") atualizarStartup(perfis[usuario.id], corpo);
-      else perfis[usuario.id] = { ...perfis[usuario.id], ...corpo };
+      else atualizarInvestidor(perfis[usuario.id], corpo);
     }
     return perfilCompleto(banco, usuario);
   },
