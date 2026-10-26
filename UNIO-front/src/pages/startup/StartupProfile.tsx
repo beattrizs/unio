@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { flushSync } from "react-dom";
-import { Building2, CircleAlert, Clock, Eye, FileText, Users } from "lucide-react";
+import { Building2, CircleAlert, Eye, FileText, Users } from "lucide-react";
 import AvisoEstado from "../../components/discovery/AvisoEstado";
 import { OUTLINE_BUTTON } from "../../components/pitch/styles";
 import CompanyDataCard from "../../components/profile/CompanyDataCard";
@@ -9,9 +8,12 @@ import PendingChangesBar from "../../components/profile/PendingChangesBar";
 import ProfileCardPreview from "../../components/profile/ProfileCardPreview";
 import ProfilePageSkeleton from "../../components/profile/ProfilePageSkeleton";
 import TeamSection from "../../components/profile/team/TeamSection";
+import ProfileStatusBadge from "../../components/profile/visibility/ProfileStatusBadge";
+import VisibilitySection from "../../components/profile/visibility/VisibilitySection";
 import Tabs, { TabPanel, type TabItem } from "../../components/ui/Tabs";
 import ContatosForm from "../../components/unios/ContatosForm";
 import { useStartupDocuments } from "../../hooks/useStartupDocuments";
+import { useProfileVisibility } from "../../hooks/useProfileVisibility";
 import { useStartupProfileEditor } from "../../hooks/useStartupProfileEditor";
 import { useStartupTeam } from "../../hooks/useStartupTeam";
 
@@ -19,18 +21,15 @@ type ProfileTab = "dados" | "equipe" | "documentos" | "visibilidade";
 
 const TABS_ID = "perfil-tabs";
 
-function profileTabs(teamCount: number | null, documentCount: number | null): TabItem<ProfileTab>[] {
+function profileTabs(teamCount: number | null, documentCount: number | null, unsavedTabs: ProfileTab[]): TabItem<ProfileTab>[] {
+  const alert = (tab: ProfileTab) => (unsavedTabs.includes(tab) ? "alterações não salvas" : undefined);
   return [
-    { id: "dados", label: "Dados gerais", icon: Building2 },
+    { id: "dados", label: "Dados gerais", icon: Building2, alert: alert("dados") },
     { id: "equipe", label: teamCount ? `Equipe (${teamCount})` : "Equipe", icon: Users },
-    { id: "documentos", label: documentCount ? `Documentos (${documentCount})` : "Documentos", icon: FileText }, 
-    { id: "visibilidade", label: "Visibilidade", icon: Eye },
+    { id: "documentos", label: documentCount ? `Documentos (${documentCount})` : "Documentos", icon: FileText },
+    { id: "visibilidade", label: "Visibilidade", icon: Eye, alert: alert("visibilidade") },
   ];
 }
-
-const COMING_SOON: Record<Exclude<ProfileTab, "dados" | "equipe" | "documentos">, string> = {
-  visibilidade: "Em breve você poderá escolher quem vê o perfil da startup aqui.",
-};
 
 export default function StartupProfile() {
   const editor = useStartupProfileEditor();
@@ -38,12 +37,17 @@ export default function StartupProfile() {
   const [activeTab, setActiveTab] = useState<ProfileTab>("dados");
   const team = useStartupTeam();
   const documents = useStartupDocuments();
+  const visibility = useProfileVisibility();
   const savedName = saved?.nome.trim();
 
-  function handleSave() {
-    flushSync(() => setActiveTab("dados"));
-    void editor.save();
-  }
+  const unsavedTabs = (
+    [
+      ["dados", editor.isDirty],
+      ["visibilidade", visibility.isDirty],
+    ] as const
+  )
+    .filter(([tab, dirty]) => dirty && tab !== activeTab)
+    .map(([tab]) => tab);
 
   let content;
   if (editor.loading) {
@@ -85,7 +89,10 @@ export default function StartupProfile() {
     <div>
       <div className="mb-6 border-b border-lightgray pb-5">
         <p className="text-xs font-bold uppercase tracking-wider text-deepgreen/75">Configurações institucionais</p>
-        <h1 className="mt-2 text-3xl font-bold text-deepgreen sm:text-4xl">Meu Perfil</h1>
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <h1 className="text-3xl font-bold text-deepgreen sm:text-4xl">Meu Perfil</h1>
+          {visibility.saved && <ProfileStatusBadge status={visibility.saved.status} />}
+        </div>
         <p className="mt-2 max-w-2xl text-deepgreen/80">
           Gerencie as informações públicas e cadastrais {savedName ? `da ${savedName}` : "da sua startup"}.
         </p>
@@ -94,7 +101,7 @@ export default function StartupProfile() {
       <Tabs
         label="Seções do perfil"
         idPrefix={TABS_ID}
-        tabs={profileTabs(team.count, documents.count)}
+        tabs={profileTabs(team.count, documents.count, unsavedTabs)}
         activeTab={activeTab}
         onChange={setActiveTab}
         variant="pill"
@@ -114,18 +121,30 @@ export default function StartupProfile() {
         <DocumentsSection documents={documents} />
       </TabPanel>
 
-      {(Object.keys(COMING_SOON) as (keyof typeof COMING_SOON)[]).map((tab) => (
-        <TabPanel key={tab} idPrefix={TABS_ID} tab={tab} activeTab={activeTab} className="mt-6">
-          <AvisoEstado icone={Clock} titulo="Em breve" texto={COMING_SOON[tab]} />
-        </TabPanel>
-      ))}
+     <TabPanel idPrefix={TABS_ID} tab="visibilidade" activeTab={activeTab} className="mt-6">
+        <VisibilitySection
+          visibility={visibility}
+          profile={saved}
+          profileLoading={editor.loading}
+          teamCount={team.count}
+          documentCount={documents.count}
+        />
+      </TabPanel>
 
-      {editor.isDirty && (
+      {activeTab === "dados" && editor.isDirty && (
         <PendingChangesBar
           saving={editor.saving}
           error={editor.saveError}
           onDiscard={editor.discard}
-          onSave={handleSave}
+          onSave={() => void editor.save()}
+        />
+      )}
+      {activeTab === "visibilidade" && visibility.isDirty && (
+        <PendingChangesBar
+          saving={visibility.saving}
+          error={visibility.saveError}
+          onDiscard={visibility.discard}
+          onSave={() => void visibility.save()}
         />
       )}
     </div>
