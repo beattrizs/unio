@@ -10,6 +10,8 @@ interface ProfileTextFieldProps {
   hint?: string;
   placeholder?: string;
   autoComplete?: string;
+  type?: "text" | "url";
+  disabled?: boolean;
   maxLength: number;
   value: string;
   error?: string;
@@ -26,6 +28,8 @@ export default function ProfileTextField({
   hint,
   placeholder,
   autoComplete = "off",
+  type = "text",
+  disabled,
   maxLength,
   value,
   error,
@@ -45,17 +49,20 @@ export default function ProfileTextField({
           )}
           <input
             id={id}
-            type="text"
+            type={type}
             value={value}
             placeholder={placeholder}
             autoComplete={autoComplete}
             maxLength={maxLength}
             required={required}
+            disabled={disabled}
             aria-invalid={invalid || undefined}
             aria-describedby={describedBy}
             onChange={(event) => onChange(event.target.value)}
             onBlur={onBlur}
-            className={`${FIELD_BASE} ${fieldBorder(invalid)} min-h-[48px] bg-lightgray pr-4 ${Icon ? "pl-11" : "pl-4"}`}
+            className={`${FIELD_BASE} ${fieldBorder(invalid)} min-h-[48px] bg-lightgray pr-4 ${Icon ? "pl-11" : "pl-4"}${
+              disabled ? " cursor-not-allowed opacity-60" : ""
+             }`}
           />
         </div>
       )}

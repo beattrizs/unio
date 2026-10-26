@@ -3,16 +3,21 @@ import { OUTLINE_BUTTON, PRIMARY_BUTTON } from "../pitch/styles";
 
 interface PendingChangesBarProps {
   saving: boolean;
-  // Validation or save error, shown inside the bar (toasts would cover it
-  // on mobile)
   error: string | null;
+  helperText?: string;
+  saveLabel?: string;
   onDiscard: () => void;
   onSave: () => void;
 }
 
-// Sticky bar shown while the form has unsaved changes. The backend applies
-// edits right away (no moderation), hence the helper text.
-export default function PendingChangesBar({ saving, error, onDiscard, onSave }: PendingChangesBarProps) {
+export default function PendingChangesBar({
+  saving,
+  error,
+  helperText = "As alterações ficam visíveis para os investidores assim que forem salvas.",
+  saveLabel = "Salvar alterações",
+  onDiscard,
+  onSave,
+}: PendingChangesBarProps) {
   return (
     <div className="sticky bottom-4 z-20 mt-6">
       <section
@@ -25,9 +30,7 @@ export default function PendingChangesBar({ saving, error, onDiscard, onSave }: 
           </span>
           <div className="min-w-0">
             <p className="font-semibold text-deepgreen">Você tem alterações pendentes</p>
-            <p className="text-sm text-deepgreen/80">
-              As alterações ficam visíveis para os investidores assim que forem salvas.
-            </p>
+            <p className="text-sm text-deepgreen/80">{helperText}</p>
             <p role="alert" className="text-sm text-red-600 empty:hidden">
               {error && (
                 <span className="mt-1 inline-flex items-start gap-1.5">
@@ -47,7 +50,7 @@ export default function PendingChangesBar({ saving, error, onDiscard, onSave }: 
           </button>
           <button type="button" onClick={onSave} disabled={saving} className={PRIMARY_BUTTON}>
             <Check size={18} aria-hidden="true" />
-            {saving ? "Salvando…" : "Salvar alterações"}
+            {saving ? "Salvando…" : saveLabel}
           </button>
         </div>
       </section>
