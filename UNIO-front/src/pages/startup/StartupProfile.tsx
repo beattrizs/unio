@@ -4,12 +4,14 @@ import { Building2, CircleAlert, Clock, Eye, FileText, Users } from "lucide-reac
 import AvisoEstado from "../../components/discovery/AvisoEstado";
 import { OUTLINE_BUTTON } from "../../components/pitch/styles";
 import CompanyDataCard from "../../components/profile/CompanyDataCard";
+import DocumentsSection from "../../components/profile/documents/DocumentsSection";
 import PendingChangesBar from "../../components/profile/PendingChangesBar";
 import ProfileCardPreview from "../../components/profile/ProfileCardPreview";
 import ProfilePageSkeleton from "../../components/profile/ProfilePageSkeleton";
 import TeamSection from "../../components/profile/team/TeamSection";
 import Tabs, { TabPanel, type TabItem } from "../../components/ui/Tabs";
 import ContatosForm from "../../components/unios/ContatosForm";
+import { useStartupDocuments } from "../../hooks/useStartupDocuments";
 import { useStartupProfileEditor } from "../../hooks/useStartupProfileEditor";
 import { useStartupTeam } from "../../hooks/useStartupTeam";
 
@@ -17,17 +19,16 @@ type ProfileTab = "dados" | "equipe" | "documentos" | "visibilidade";
 
 const TABS_ID = "perfil-tabs";
 
-function profileTabs(teamCount: number | null): TabItem<ProfileTab>[] {
+function profileTabs(teamCount: number | null, documentCount: number | null): TabItem<ProfileTab>[] {
   return [
     { id: "dados", label: "Dados gerais", icon: Building2 },
     { id: "equipe", label: teamCount ? `Equipe (${teamCount})` : "Equipe", icon: Users },
-    { id: "documentos", label: "Documentos", icon: FileText },
+    { id: "documentos", label: documentCount ? `Documentos (${documentCount})` : "Documentos", icon: FileText }, 
     { id: "visibilidade", label: "Visibilidade", icon: Eye },
   ];
 }
 
-const COMING_SOON: Record<Exclude<ProfileTab, "dados" | "equipe">, string> = {
-  documentos: "Em breve você poderá enviar e organizar os documentos da startup aqui.",
+const COMING_SOON: Record<Exclude<ProfileTab, "dados" | "equipe" | "documentos">, string> = {
   visibilidade: "Em breve você poderá escolher quem vê o perfil da startup aqui.",
 };
 
@@ -36,6 +37,7 @@ export default function StartupProfile() {
   const { saved, values, errors } = editor;
   const [activeTab, setActiveTab] = useState<ProfileTab>("dados");
   const team = useStartupTeam();
+  const documents = useStartupDocuments();
   const savedName = saved?.nome.trim();
 
   function handleSave() {
@@ -92,7 +94,7 @@ export default function StartupProfile() {
       <Tabs
         label="Seções do perfil"
         idPrefix={TABS_ID}
-         tabs={profileTabs(team.count)}
+        tabs={profileTabs(team.count, documents.count)}
         activeTab={activeTab}
         onChange={setActiveTab}
         variant="pill"
@@ -108,6 +110,9 @@ export default function StartupProfile() {
         <TeamSection team={team} startupName={savedName ?? ""} />
       </TabPanel>
 
+      <TabPanel idPrefix={TABS_ID} tab="documentos" activeTab={activeTab} className="mt-6">
+        <DocumentsSection documents={documents} />
+      </TabPanel>
 
       {(Object.keys(COMING_SOON) as (keyof typeof COMING_SOON)[]).map((tab) => (
         <TabPanel key={tab} idPrefix={TABS_ID} tab={tab} activeTab={activeTab} className="mt-6">
