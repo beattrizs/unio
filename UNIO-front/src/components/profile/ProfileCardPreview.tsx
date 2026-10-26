@@ -5,17 +5,23 @@ import AvatarIniciais from "../discovery/AvatarIniciais";
 import PitchCard from "../pitch/PitchCard";
 import { CHIP } from "../pitch/styles";
 
-// Same chip styles as the investors' RecommendationCard
 const CHIP_STYLES = [
   "bg-lightgray/70 font-medium text-deepgreen",
   "border border-sage bg-sage/20 font-medium text-deepgreen",
   "bg-lightgray/50 text-deepgreen/75",
 ];
 
-// Live card of the startup as investors see it, built only from the fields
-// the API has. Verified icon, founding year, funding type, compatibility
-// and card statistics are not provided by the API and are not rendered.
-export default function ProfileCardPreview({ values }: { values: StartupProfileFormValues }) {
+interface ProfileCardPreviewProps {
+  values: StartupProfileFormValues;
+  title?: string;
+  subtitle?: string;
+  hidePitch?: boolean;
+  hideCapital?: boolean;
+  paused?: boolean;
+  details?: { label: string; value: string }[];
+}
+
+export default function ProfileCardPreview({ values, title, subtitle, hidePitch, hideCapital, paused, details }: ProfileCardPreviewProps) {
   const name = values.nome.trim();
   const location = values.localizacao.trim();
   const pitch = values.pitchCanvas.trim();
@@ -23,10 +29,9 @@ export default function ProfileCardPreview({ values }: { values: StartupProfileF
 
   return (
     <PitchCard
-      title="Pré-visualização do card"
+      title={title || "Pré-visualização do card"}
       icon={Eye}
-      subtitle="Assim sua startup aparece para os investidores."
-      // Same height as the form card on lg+ (content stays at the top)
+      subtitle={subtitle || "Assim sua startup aparece para os investidores."}
       className="h-full"
       badge={
         <span className={`${CHIP} bg-sage/30 text-deepgreen`}>
@@ -36,6 +41,12 @@ export default function ProfileCardPreview({ values }: { values: StartupProfileF
       }
     >
       <article className="rounded-3xl border border-lightgray bg-white p-5 shadow-soft">
+        {paused && (
+          <span className={`${CHIP} mb-3 bg-lightgray text-deepgreen`}>
+            <span className="h-2 w-2 rounded-full bg-deepgreen/60" aria-hidden="true" />
+            Perfil pausado
+          </span>
+        )}
         <div className="flex items-center gap-3">
           <AvatarIniciais nome={name || "?"} />
           <div className="min-w-0">
@@ -69,17 +80,33 @@ export default function ProfileCardPreview({ values }: { values: StartupProfileF
           <div className="min-w-0">
             <p className="text-[11px] font-bold uppercase tracking-wider text-deepgreen/75">Rodada atual</p>
             <p className="text-lg font-bold leading-tight text-deepgreen">
-              {values.capitalProcurado ? `Busca ${formatBrl(values.capitalProcurado)}` : "Valor não informado"}
+              {hideCapital
+                ? "Sob consulta"
+                : values.capitalProcurado
+                  ? `Busca ${formatBrl(values.capitalProcurado)}`
+                  : "Valor não informado"}
             </p>
           </div>
         </div>
 
-        {pitch ? (
-          <blockquote className="mt-4 line-clamp-2 break-words border-l-4 border-sage pl-3 text-sm italic leading-relaxed text-deepgreen/90">
-            “{pitch}”
-          </blockquote>
-        ) : (
-          <p className="mt-4 text-sm text-deepgreen/75">Seu pitch aparece aqui.</p>
+       {!hidePitch &&
+          (pitch ? (
+            <blockquote className="mt-4 line-clamp-2 break-words border-l-4 border-sage pl-3 text-sm italic leading-relaxed text-deepgreen/90">
+              “{pitch}”
+            </blockquote>
+          ) : (
+            <p className="mt-4 text-sm text-deepgreen/75">Seu pitch aparece aqui.</p>
+          ))}
+
+        {details && details.length > 0 && (
+          <dl className="mt-4 space-y-1.5 border-t border-lightgray pt-3 text-sm">
+            {details.map(({ label, value }) => (
+              <div key={label} className="flex flex-wrap justify-between gap-x-3">
+                <dt className="text-deepgreen/75">{label}</dt>
+                <dd className="font-semibold text-deepgreen">{value}</dd>
+              </div>
+            ))}
+          </dl>
         )}
       </article>
     </PitchCard>
